@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title>
+            Sentry Turret
+        </title>
+        <style>
+            #hud{
+                position: absolute;
+                z-index: 1;
+            }
+        </style>
+        <body>
+            <div id="hud">
+                <img style="width:320px;height:240px" src="static/images/dominator_hud_small.png">
+            </div>
+            <img src="{{ url_for('video_feed') }}">
+        </body>
+    </head>
+</html>

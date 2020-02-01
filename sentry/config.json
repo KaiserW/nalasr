@@ -1,0 +1,6 @@
+{
+    "yolo_path": "yolo-coco",
+    "confidence": 0.5,
+    "threshold": 0.4,
+    "consider": ["person","aeroplane", "bus", "car", "truck", "boat","bicycle", "motorbike", "teddy bear"]
+}
