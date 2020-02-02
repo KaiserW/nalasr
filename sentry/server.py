@@ -1,9 +1,10 @@
 from utils.yolov3_detector import YoloNet
 from utils.conf import Conf
+import zmq
 from imagezmq import imagezmq
 import imutils
 import cv2
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request
 import threading
 import argparse
 
@@ -11,7 +12,11 @@ import argparse
 outputFrame = None
 lock = threading.Lock()
 
+# HUD server
 app = Flask(__name__)
+
+# Listening front-end command
+context = zmq.Context()
 
 
 @app.route("/")
@@ -19,10 +24,33 @@ def index():
     return render_template("index.html")
 
 
+# Reading VideoStream from Respberry
 @app.route("/video_feed")
 def video_feed():
     return Response(generate(),
                     mimetype="multipart/x-mixed-replace;boundary=frame")
+
+
+# Receiving mouse click postion
+@app.route("/post_coord", methods=["POST"])
+def get_coord():
+
+    x = request.form["x"]
+    y = request.form["y"]
+
+    print("[INFO] sending command: x={}, y={}".format(x, y))
+
+    socket = context.socket(zmq.REQ)
+    socket.connect("tcp://{}:5556".format(args["server_ip"]))
+
+    cmd_dict = {"x": x,
+                "y": y}
+    socket.send_json(cmd_dict)
+
+    response = socket.recv().decode("ascii")
+    print("[INFO] received reply '{}'".format(response))
+
+    return "200 OK"
 
 
 def detect_object():
@@ -50,6 +78,8 @@ def detect_object():
         if key == ord("q"):
             break
 
+    cv2.destroyAllWindows()
+
 
 def generate():
 
@@ -73,7 +103,9 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser()
     ap.add_argument("-c", "--conf", required=True,
-                help="Path to the input configuration file")
+        help="Path to the input configuration file")
+    ap.add_argument("-ip", "--server-ip", required=True,
+        help="IP of the client (Raspberry)")
     args = vars(ap.parse_args())
 
     # Reading VideoStream from Respberry
@@ -86,4 +118,3 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True,
             threaded=True, use_reloader=False)
 
-cv2.destroyAllWindows()

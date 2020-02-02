@@ -3,17 +3,61 @@
         <title>
             Sentry Turret
         </title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
         <style>
-            #hud{
+            #hud {
+                cursor: pointer;    
                 position: absolute;
                 z-index: 1;
             }
         </style>
-        <body>
-            <div id="hud">
-                <img style="width:320px;height:240px" src="static/images/dominator_hud_small.png">
-            </div>
-            <img src="{{ url_for('video_feed') }}">
-        </body>
+        <script src="static/js/jquery-3.4.1.min.js"></script>
     </head>
+    <body>
+        <div id="hud">
+            <img style="width:320px;height:240px" src="static/images/dominator_hud_small.png">
+        </div>
+        <img src="{{ url_for('video_feed') }}"> 
+        <script>
+            var hud = document.querySelector("#hud")
+            hud.addEventListener("click", getClickPosition, false)
+
+            function getClickPosition(e){
+                var parentPosition = getPosition(e.currentTarget);
+                var xPosition = e.clientX - parentPosition.x
+                var yPosition = e.clientY - parentPosition.y
+            
+                $.post("/post_coord", {
+                    "x": Math.floor(xPosition),
+                    "y": Math.floor(yPosition)
+                });
+                // console.log("x:", xPosition, " y:", yPosition)
+            }
+
+            function getPosition(el){
+                var xPos = 0;
+                var yPos = 0;
+
+                while(el){
+                    if (el.tagName == "BODY"){
+                        var xScroll = el.scrollLeft || document.documentElement.scrollLeft;
+                        var yScroll = el.scrollTop || document.documentElement.scrollTop;
+                    
+                        xPos += (el.offsetLeft - xScroll + el.clientLeft);
+                        yPos += (el.offsetTop - yScroll + el.clientTop);                           
+                    } else {
+                        xPos += (el.offsetLeft - el.scrollLeft + el.clientLeft);
+                        yPos += (el.offsetTop - el.scrollTop + el.clientTop)
+                    }
+
+                    el = el.offsetParent;
+                }
+
+                return {
+                    x: xPos,
+                    y: yPos
+                };
+            }
+        </script>
+    </body>
 </html>
